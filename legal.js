@@ -23,28 +23,41 @@ const LEGAL = {
     if (analyticsLoaded || !LEGAL.metrikaId) return;
     analyticsLoaded = true;
     // Стандартный код Яндекс Метрики. Вебвизор выключен: с ним нужна маскировка полей формы и отдельное описание в политике.
-    (function (m, e, t, r, i, k, a) { m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); }; m[i].l = 1 * new Date(); k = e.createElement(t); a = e.getElementsByTagName(t)[0]; k.async = 1; k.src = r; a.parentNode.insertBefore(k, a); })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym');
-    ym(LEGAL.metrikaId, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: false });
+    const id = Number(LEGAL.metrikaId);
+    (function (m, e, t, r, i, k, a) { m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); }; m[i].l = 1 * new Date(); k = e.createElement(t); a = e.getElementsByTagName(t)[0]; k.async = 1; k.src = r; a.parentNode.insertBefore(k, a); })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=' + id, 'ym');
+    ym(id, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: false });
   }
+
+  // Отзыв согласия: выключаем счётчик и стираем его cookie (обещание п. 8.3 политики)
+  const YM_COOKIES = ['_ym_uid', '_ym_d', '_ym_isad'];
+  const dropAnalytics = () => {
+    if (LEGAL.metrikaId) window['disableYaCounter' + Number(LEGAL.metrikaId)] = true;
+    const host = location.hostname.replace(/^www\./, '');
+    YM_COOKIES.forEach((n) => { document.cookie = `${n}=; Max-Age=0; path=/`; document.cookie = `${n}=; Max-Age=0; path=/; domain=.${host}`; });
+  };
 
   /* ---------- Баннер ---------- */
   const banner = document.createElement('div');
-  banner.className = 'cookie'; banner.setAttribute('role', 'dialog'); banner.setAttribute('aria-labelledby', 'cookieTitle'); banner.setAttribute('aria-describedby', 'cookieText');
+  banner.className = 'cookie'; banner.setAttribute('role', 'region'); banner.setAttribute('aria-label', 'Использование cookie'); banner.setAttribute('aria-labelledby', 'cookieTitle'); banner.setAttribute('aria-describedby', 'cookieText'); banner.tabIndex = -1;
   banner.innerHTML = `
     <h2 id="cookieTitle">Мы используем cookie</h2>
-    <p id="cookieText">Технически необходимые cookie обеспечивают работу сайта и запоминают ваш выбор. Аналитические cookie сервиса «Яндекс Метрика» (ООО «Яндекс») — идентификатор посетителя, IP-адрес, сведения о браузере и действиях на сайте — устанавливаются только с вашего согласия и помогают нам улучшать сайт. Нажимая «Принять», вы даёте ${LEGAL.operator} согласие на их обработку на условиях <a href="privacy.html">Политики обработки персональных данных</a>. Изменить выбор можно в любой момент: ссылка «Настройки cookie» внизу страницы.</p>
+    <p id="cookieText">Технически необходимые cookie работают всегда. Аналитические cookie «Яндекс Метрики» (обработка по поручению — ООО «Яндекс», Москва): идентификатор посетителя, IP-адрес, действия на сайте — ставятся только с вашего согласия. Нажимая «Разрешить аналитику», вы даёте его ${LEGAL.operator} на условиях <a href="privacy.html">Политики обработки персональных данных</a> (раздел 8). Выбор хранится 12 месяцев; изменить его можно в «Настройках cookie» внизу страницы.</p>
     <div class="cookie__btns">
-      <button type="button" class="pill pill--accent" data-choice="all">Принять</button>
+      <button type="button" class="pill pill--accent" data-choice="all">Разрешить аналитику</button>
       <button type="button" class="pill pill--outline" data-choice="necessary">Только необходимые</button>
     </div>`;
   document.body.append(banner);
-  const open = () => banner.classList.add('is-open');
-  const close = () => banner.classList.remove('is-open');
+  let lastTrigger = null;
+  const open = (byUser) => { banner.classList.add('is-open'); if (byUser) requestAnimationFrame(() => banner.querySelector('[data-choice]').focus()); };
+  const close = () => { banner.classList.remove('is-open'); if (lastTrigger) { lastTrigger.focus(); lastTrigger = null; } };
   banner.addEventListener('click', (e) => {
     const b = e.target.closest('[data-choice]'); if (!b) return;
+    const wasAll = (read() || {}).choice === 'all';
     write(b.dataset.choice); close();
     if (b.dataset.choice === 'all') loadAnalytics();
+    else if (analyticsLoaded || wasAll) { dropAnalytics(); location.reload(); }
   });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && banner.classList.contains('is-open') && read()) close(); });
 
   const saved = read();
   if (saved) { if (saved.choice === 'all') loadAnalytics(); }
@@ -52,7 +65,7 @@ const LEGAL = {
 
   // «Настройки cookie» в подвале — отзыв или изменение согласия
   document.addEventListener('click', (e) => {
-    if (e.target.closest('[data-cookie-settings]')) { e.preventDefault(); open(); }
+    const t = e.target.closest('[data-cookie-settings]'); if (t) { e.preventDefault(); lastTrigger = t; open(true); }
   });
 
   /* ---------- Данные о согласии для заявки (читает app.js при отправке) ---------- */

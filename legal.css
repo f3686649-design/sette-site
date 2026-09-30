@@ -21,7 +21,7 @@ mark.todo { background: #ffe898; color: var(--black); padding: 0 4px; border-rad
 @media (max-width: 700px) { .doc-table { display: block; overflow-x: auto; } }
 
 /* ---------- Cookie-баннер ---------- */
-.cookie { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 130; max-width: 560px; background: var(--white); color: var(--black); border-radius: 14px; padding: 20px 22px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.5); transform: translateY(24px); opacity: 0; visibility: hidden; transition: transform .6s var(--ease), opacity .4s, visibility 0s .6s; }
+.cookie { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 85; max-height: calc(100dvh - 32px); overflow: auto; overscroll-behavior: contain; max-width: 560px; background: var(--white); color: var(--black); border-radius: 14px; padding: 20px 22px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.5); transform: translateY(24px); opacity: 0; visibility: hidden; transition: transform .6s var(--ease), opacity .4s, visibility 0s .6s; }
 .cookie.is-open { transform: none; opacity: 1; visibility: visible; transition-delay: 0s; }
 .cookie h2 { font: 700 16px/1.3 var(--font); margin: 0 0 8px; }
 .cookie p { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--muted); }
@@ -30,6 +30,8 @@ mark.todo { background: #ffe898; color: var(--black); padding: 0 4px; border-rad
 .cookie__btns .pill { padding: 11px 18px; font-size: 14px; }
 .cookie__btns .pill--outline { border: 1px solid var(--line-dark); color: var(--black); }
 @media (min-width: 901px) { .cookie { left: 24px; bottom: 24px; } }
+@media (max-width: 400px) { .cookie { padding: 16px; } .cookie p { font-size: 13px; } }
+body:has(.cookie.is-open) .fab { opacity: 0; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .cookie { transition: none; } }
 
 /* ---------- Форма: согласия и подпись ---------- */

@@ -279,6 +279,8 @@ document.addEventListener('click', (e) => {
 
 /* ================= Форма ================= */
 const form = $('#pickForm'), msg = $('#formMsg');
+let formStarted = 0;
+form.addEventListener('focusin', () => { formStarted ||= Date.now(); }, { once: true });
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(form);
@@ -292,18 +294,25 @@ form.addEventListener('submit', async (e) => {
 
   const utm = Object.fromEntries([...new URLSearchParams(location.search)].filter(([k]) => k.startsWith('utm_')));
   const data = { name: fd.get('name'), phone: fd.get('phone'), rooms: fd.getAll('rooms').join(', ') || 'не указано', complex: fd.get('complex'),
-    consent: true, ads: !!fd.get('ads'), website: fd.get('website') || '', ...(typeof legalConsent === 'function' ? legalConsent() : {}), ...utm };
+    consent: true, ads: !!fd.get('ads'), hp_field: fd.get('hp_field') || '', elapsed_ms: formStarted ? Date.now() - formStarted : 0, ...(typeof legalConsent === 'function' ? legalConsent() : {}), ...utm };
   if (SUBMIT_URL) {
+    const btn = form.querySelector('[type=submit]'); btn.disabled = true;
     try {
-      const r = await fetch(SUBMIT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-      if (!r.ok) throw new Error(r.status);
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 15000);
+      const r = await fetch(SUBMIT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal: ctrl.signal });
+      clearTimeout(tm);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || String(r.status));
       say('Спасибо! Менеджер перезвонит в ближайшее рабочее время.', true);
       form.reset();
-    } catch { say('Не удалось отправить. Позвоните нам: +7 914 275-78-77'); }
+    } catch (e) {
+      say(e.message === 'validation' ? 'Проверьте имя и телефон' : e.message === 'rate' ? 'Слишком много попыток, попробуйте позже' : 'Не удалось отправить. Позвоните нам: +7 914 275-78-77');
+    } finally { btn.disabled = false; }
   } else {
     const body = `Имя: ${data.name}\nТелефон: ${data.phone}\nКвартира: ${data.rooms}\nЖК: ${data.complex}\nСогласие на обработку ПД: да (версия ${data.consent_version || '—'})\nСогласие на рекламу: ${data.ads ? 'да' : 'нет'}`;
     location.href = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent('Заявка с сайта: подбор квартиры')}&body=${encodeURIComponent(body)}`;
     say('Открываем почту для отправки заявки…', true);
+    setTimeout(() => say(`Если почта не открылась — позвоните +7 914 275-78-77 или напишите на ${SALES_EMAIL}`, true), 2500);
   }
 });
 

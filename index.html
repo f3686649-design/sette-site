@@ -273,14 +273,14 @@
       <div class="form__step">
         <p class="form__q"><span>03</span> Куда перезвонить?</p>
         <div class="form__row">
-          <label class="field"><input type="text" name="name" autocomplete="name" placeholder=" " required><span>Имя</span></label>
-          <label class="field"><input type="tel" name="phone" autocomplete="tel" placeholder=" " required><span>Телефон</span></label>
+          <label class="field"><input type="text" name="name" autocomplete="name" placeholder=" " maxlength="100" required><span>Имя</span></label>
+          <label class="field"><input type="tel" name="phone" autocomplete="tel" placeholder=" " maxlength="20" required><span>Телефон</span></label>
         </div>
       </div>
-      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" value="">
-      <label class="consent"><input type="checkbox" name="consent" required><span>Даю согласие <span class="todo-inline">[[ООО «СЗ «…»]]</span> на обработку моих персональных данных — имени и номера телефона — для обратного звонка и консультации по квартирам на условиях <a href="consent.html" target="_blank" rel="noopener">Согласия на обработку персональных данных</a>. С <a href="privacy.html" target="_blank" rel="noopener">Политикой</a> ознакомлен(а).</span></label>
-      <label class="consent consent--soft"><input type="checkbox" name="ads"><span>Хочу получать информацию об акциях, старте продаж и ходе строительства по телефону, SMS и в мессенджерах — <a href="consent-ads.html" target="_blank" rel="noopener">условия</a>. Необязательно, отказаться можно в любой момент.</span></label>
-      <p class="form__legal">Данные хранятся на серверах в России и передаются только лицам, обрабатывающим их по нашему поручению (перечень — в Политике). Срок хранения заявки — 12 месяцев или до отзыва согласия.</p>
+      <input type="text" name="hp_field" tabindex="-1" autocomplete="new-password" aria-hidden="true" style="position:absolute;left:-9999px" value="">
+      <label class="consent"><input type="checkbox" name="consent" required><span>Даю согласие <span class="todo-inline">[[ООО «СЗ «…»]]</span> на обработку моих персональных данных (имя, телефон, параметры заявки, технические данные заявки и сведения об источнике перехода на сайт) для обратного звонка и консультации по квартирам на условиях <a href="consent.html" target="_blank" rel="noopener">Согласия на обработку персональных данных</a>.</span></label>
+      <label class="consent consent--soft"><input type="checkbox" name="ads"><span>Хочу получать информацию об акциях, старте продаж и ходе строительства по телефону и SMS — <a href="consent-ads.html" target="_blank" rel="noopener">условия</a>. Необязательно, отказаться можно в любой момент.</span></label>
+      <p class="form__legal">Отправляя заявку, вы подтверждаете, что ознакомились с <a href="privacy.html" target="_blank" rel="noopener">Политикой обработки персональных данных</a>. Данные хранятся на серверах в России и передаются лицам, обрабатывающим их по нашему поручению (перечень — в Политике), а также в случаях, предусмотренных законом. Срок хранения заявки — 12 месяцев или до отзыва согласия.</p>
       <button class="pill pill--accent pill--big magnetic" type="submit">Жду звонка <span>→</span></button>
       <p class="form__msg" id="formMsg" role="status"></p>
     </form>
@@ -350,9 +350,9 @@
     </div>
     <a href="#top" class="footer__brand" aria-label="СЭТТЭ — наверх"><img src="img/logo-white.png" alt="СЭТТЭ" width="588" height="137"></a>
     <div class="footer__legal">
-      <div><b><mark class="todo">[[Полное фирменное наименование: Общество с ограниченной ответственностью «Специализированный застройщик «…»]]</mark></b> · ОГРН <mark class="todo">[[ОГРН]]</mark> · ИНН <mark class="todo">[[ИНН]]</mark></div>
+      <div>Владелец сайта и оператор персональных данных: <b><mark class="todo">[[Полное фирменное наименование: Общество с ограниченной ответственностью «Специализированный застройщик «…»]]</mark></b> · ОГРН <mark class="todo">[[ОГРН]]</mark> · ИНН <mark class="todo">[[ИНН]]</mark></div>
       <div>Место нахождения: <mark class="todo">[[юридический адрес]]</mark> · Офис продаж: г. Якутск, ул. Кирова 18, блок В, 9 этаж, офис 900 · Режим работы: <mark class="todo">[[пн–пт 9:00–18:00, UTC+9]]</mark></div>
-      <div>Телефон: +7 914 275-78-77 · E-mail для юридически значимых сообщений: <mark class="todo">[[e-mail]]</mark></div>
+      <div>Телефон: +7 914 275-78-77 · E-mail для юридически значимых сообщений и заявлений (в т. ч. по ст. 15.7 149-ФЗ): <mark class="todo">[[e-mail]]</mark></div>
       <div>Застройщики объектов: <mark class="todo">[[ООО «СЗ «…», ООО «СЗ «…» — по каждому ЖК]]</mark>. Проектные декларации размещены в Единой информационной системе жилищного строительства на сайте <a href="https://наш.дом.рф/" target="_blank" rel="noopener">наш.дом.рф</a>. Квартиры реализуются по договорам участия в долевом строительстве (214-ФЗ) с использованием счетов эскроу.</div>
       <div>Изображения объектов — визуализации, готовые здания могут отличаться. Информация о планировках и ценах носит справочный характер и не является публичной офертой (ст. 437 ГК РФ).</div>
       <div class="footer__links">
