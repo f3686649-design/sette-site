@@ -1,0 +1,53 @@
+/* Юридические страницы и cookie-баннер */
+.doc-page { background: var(--white); color: var(--black); }
+.doc-head { background: var(--deep); color: #fff; padding: 56px 0 40px; }
+.doc-head h1 { font: 600 clamp(26px, 3.4vw, 40px)/1.1 var(--font); letter-spacing: -.02em; margin: 0 0 14px; max-width: 24ch; }
+.doc-head .label { color: var(--muted-light); }
+.doc-back { display: inline-block; margin-bottom: 28px; font-weight: 600; color: var(--gold-light); }
+.doc-sub { font-weight: 600; margin: 0 0 12px; }
+.doc-note { font-size: 14px; color: var(--muted-light); max-width: 80ch; margin: 0; }
+.doc { padding: 40px 0 80px; max-width: 880px; font-size: 16px; line-height: 1.65; }
+.doc h2 { font: 700 20px/1.3 var(--font); margin: 36px 0 12px; }
+.doc p, .doc li { margin: 0 0 10px; }
+.doc ul { padding-left: 22px; }
+.doc a { color: var(--blue); text-decoration: underline; }
+.doc-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 18px; }
+.doc-table th, .doc-table td { border: 1px solid var(--line-dark); padding: 8px 10px; vertical-align: top; text-align: left; }
+.doc-table th { background: var(--mist); font-weight: 700; }
+.doc-hint { display: block; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.doc-foot { border-top: 1px solid var(--line-dark); padding: 24px 0; font-size: 14px; color: var(--muted); }
+.doc-foot a { color: var(--blue); }
+mark.todo { background: #ffe898; color: var(--black); padding: 0 4px; border-radius: 3px; font-weight: 600; }
+@media (max-width: 700px) { .doc-table { display: block; overflow-x: auto; } }
+
+/* ---------- Cookie-баннер ---------- */
+.cookie { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 130; max-width: 560px; background: var(--white); color: var(--black); border-radius: 14px; padding: 20px 22px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.5); transform: translateY(24px); opacity: 0; visibility: hidden; transition: transform .6s var(--ease), opacity .4s, visibility 0s .6s; }
+.cookie.is-open { transform: none; opacity: 1; visibility: visible; transition-delay: 0s; }
+.cookie h2 { font: 700 16px/1.3 var(--font); margin: 0 0 8px; }
+.cookie p { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.cookie p a { color: var(--blue); text-decoration: underline; }
+.cookie__btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.cookie__btns .pill { padding: 11px 18px; font-size: 14px; }
+.cookie__btns .pill--outline { border: 1px solid var(--line-dark); color: var(--black); }
+@media (min-width: 901px) { .cookie { left: 24px; bottom: 24px; } }
+@media (prefers-reduced-motion: reduce) { .cookie { transition: none; } }
+
+/* ---------- Форма: согласия и подпись ---------- */
+.consent { align-items: flex-start; }
+.consent input { flex: none; margin-top: 3px; }
+.consent a { color: var(--gold-light); text-decoration: underline; }
+.consent--soft { opacity: .85; }
+.form__legal { margin: -8px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted-light); }
+
+/* ---------- Реквизиты в подвале ---------- */
+.footer__legal { border-top: 1px solid var(--line-light); margin-top: 32px; padding-top: 24px; font-size: 13px; line-height: 1.6; color: var(--muted-light); display: grid; gap: 6px; }
+.footer__legal a { color: rgba(255,255,255,.85); text-decoration: underline; }
+.footer__legal .footer__links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.footer__legal .footer__links a { text-decoration: none; }
+.footer__legal .footer__links a:hover, .footer__legal .footer__links button:hover { color: var(--gold-light); }
+.footer__legal button { font: inherit; color: rgba(255,255,255,.85); text-decoration: none; }
+.footer .todo, .m-decl .todo { background: rgba(255,232,152,.9); color: var(--black); padding: 0 4px; border-radius: 3px; font-weight: 600; }
+.m-decl, .proj__decl { display: block; font-size: 13px; color: var(--muted-light); margin: 0 0 18px; }
+.m-decl { color: var(--muted); }
+.m-decl a, .proj__decl a { color: inherit; text-decoration: underline; }
+.todo-inline, .proj__decl .todo { background: rgba(255,232,152,.9); color: var(--black); padding: 0 4px; border-radius: 3px; font-weight: 600; }

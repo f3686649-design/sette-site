@@ -1,0 +1,242 @@
+/* ============================================================
+   Эффекты «второго слоя»: сияние, занавес, наклон карточек, свет за курсором,
+   сборка заголовков, паттерн, карта. Всё отключается при prefers-reduced-motion.
+   ============================================================ */
+
+/* ---------- Полоса прогресса прокрутки ---------- */
+.progress { position: fixed; left: 0; top: 0; z-index: 110; width: 100%; height: 2px; background: linear-gradient(90deg, var(--blue-bright), var(--blue-light) 70%, var(--gold-light)); transform: scaleX(0); transform-origin: left; pointer-events: none; }
+
+/* ---------- Северное сияние (WebGL) ---------- */
+.aurora { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity 1.6s ease; }
+.aurora.is-on { opacity: 1; }
+.hero .aurora { z-index: 2; height: 70%; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 110px, #000 55%, transparent); mask-image: linear-gradient(180deg, transparent 0, #000 110px, #000 55%, transparent); }
+.hero__slides { z-index: 0; }
+.hero__shade { z-index: 1; }
+.hero__inner { z-index: 3; }
+.cta .aurora { z-index: 1; opacity: 0; height: 60%; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent); mask-image: linear-gradient(180deg, #000 55%, transparent); }
+.cta .aurora.is-on { opacity: .85; }
+/* без WebGL — мягкое живое свечение на CSS */
+.aurora--css { background: radial-gradient(60% 45% at 30% 20%, rgba(107,124,255,.55), transparent 70%), radial-gradient(50% 40% at 70% 10%, rgba(27,54,255,.5), transparent 70%), radial-gradient(40% 30% at 55% 35%, rgba(255,232,152,.18), transparent 70%), radial-gradient(55% 40% at 45% 15%, rgba(84,238,174,.35), transparent 70%); animation: auroraCss 14s ease-in-out infinite alternate; }
+@keyframes auroraCss { to { transform: translateX(-6%) scaleY(1.15); } }
+
+/* ---------- Первый экран — занавес ---------- */
+.hero { position: sticky; top: 0; z-index: 0; }
+main > section:not(.hero), .marquee { position: relative; z-index: 2; }
+.footer { position: relative; z-index: 3; }
+.hero__cover { position: absolute; inset: 0; background: var(--black); opacity: 0; pointer-events: none; z-index: 4; }
+
+/* ---------- Наклон карточек и блик ---------- */
+.tilt { transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--s, 1)); transition: transform .6s var(--ease); will-change: transform; }
+.tilt.is-tilting { transition: transform .12s linear; }
+.tilt .glare { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; background: radial-gradient(520px circle at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,.16), rgba(255,255,255,0) 60%); transition: opacity .4s; }
+.tilt:hover .glare { opacity: 1; }
+.scard { transform: scale(var(--s, 1)); }
+.scard.tilt { transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--s, 1)); }
+.scard::after { content: ''; position: absolute; inset: 0; background: var(--black); opacity: var(--dim, 0); pointer-events: none; z-index: 2; }
+
+/* ---------- Свет за курсором на тёмных секциях ---------- */
+.spot::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .6s; background: radial-gradient(700px circle at var(--mx, 50%) var(--my, 50%), rgba(107,124,255,.16), rgba(27,54,255,.05) 40%, transparent 65%); }
+.spot:hover::before { opacity: 1; }
+.spot > .container:not(.hscroll__head), .spot > .geo__wrap, .spot > .hscroll__track { position: relative; z-index: 1; }
+.spot > .hscroll__head { z-index: 1; }
+
+/* ---------- Сборка заголовков по словам ---------- */
+.wr { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .18em; margin-bottom: -.18em; }
+.wr > * { display: inline-block; transform: translateY(115%); transition: transform 1.1s var(--ease); transition-delay: calc(var(--i) * 70ms); }
+.is-visible .wr > *, .wr.is-visible > * { transform: none; }
+
+/* ---------- Расшифровка подписей ---------- */
+.label.is-scrambling { font-variant-numeric: tabular-nums; }
+
+/* ---------- Мерцание золота и разметка дороги ---------- */
+.scard__num { background-size: 100% 200%; animation: goldShift 6s ease-in-out infinite alternate; animation-play-state: paused; }
+.is-inview .scard__num { animation-play-state: running; }
+@keyframes goldShift { to { background-position: 0 100%; } }
+.road__line::after { animation: dash 1.4s linear infinite; }
+@keyframes dash { to { background-position: 0 34px; } }
+
+/* ---------- Фирменный паттерн (шевроны из гайдлайна, стр. 10) ---------- */
+.pattern { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; opacity: .55; -webkit-mask-image: linear-gradient(90deg, transparent 45%, #000); mask-image: linear-gradient(90deg, transparent 45%, #000); }
+.pattern::before { content: ''; position: absolute; inset: -128px 0; background-image: var(--pat, var(--pattern)); background-size: 96px 128px; animation: patternDrift 80s linear infinite; animation-play-state: paused; will-change: transform; }
+.is-inview .pattern::before { animation-play-state: running; }
+@keyframes patternDrift { to { transform: translateY(-128px); } }
+.directions { position: relative; }
+.directions > .container { position: relative; z-index: 1; }
+.footer .pattern { opacity: .35; }
+.footer > .container { position: relative; z-index: 1; }
+
+/* ---------- Погода ---------- */
+.hero__weather { display: inline-flex; align-items: center; gap: 8px; margin-left: 14px; padding-left: 14px; border-left: 1px solid rgba(255,255,255,.35); opacity: 0; transition: opacity .8s; }
+.hero__weather.is-on { opacity: 1; }
+.hero__weather b { color: var(--gold-light); }
+
+/* ---------- Карта объектов ---------- */
+.geo { background: var(--deep); color: #fff; padding: clamp(90px, 12vw, 160px) 0 0; overflow: hidden; }
+.geo__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+.geo__legend { display: flex; gap: 22px; font-size: 14px; color: var(--muted-light); flex-wrap: wrap; }
+.geo__legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: 0; background: var(--blue-light); box-shadow: 0 0 0 3px rgba(107,124,255,.25); }
+.geo__legend span.is-gold::before { background: var(--gold-light); box-shadow: 0 0 0 3px rgba(255,232,152,.25); }
+.geo__legend span.is-approx::before { background: transparent; border: 1.5px dashed var(--blue-light); box-shadow: none; }
+.geo__wrap { display: grid; grid-template-columns: 1fr 340px; }
+.geo__map { height: min(72vh, 720px); background: var(--deep-dark); position: relative; z-index: 0; }
+.geo__map .leaflet-tile-pane { filter: grayscale(1) invert(1) brightness(.78) contrast(1.15) sepia(1) hue-rotate(190deg) saturate(2.2); }
+.geo--nomap .geo__map { display: none; }
+.geo--nomap .geo__wrap { grid-template-columns: 1fr; }
+.geo__legend span.is-office::before { background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
+.pin-hit { width: 32px; height: 32px; display: grid; place-items: center; }
+@media (pointer: coarse) { .geo__map { touch-action: pan-y; } }
+.geo__map .leaflet-control-attribution { background: rgba(19,46,91,.8); color: rgba(255,255,255,.6); font-size: 10px; }
+.geo__map .leaflet-control-attribution a { color: rgba(255,255,255,.8); }
+.geo__map .leaflet-control-zoom a { background: var(--deep); color: #fff; border-color: rgba(255,255,255,.15); }
+.geo__list { max-height: min(72vh, 720px); overflow: auto; border-left: 1px solid var(--line-light); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+.geo__item { display: grid; grid-template-columns: 14px 1fr auto; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 16px 20px; border-bottom: 1px solid var(--line-light); color: #fff; transition: background .3s; }
+.geo__item:hover, .geo__item.is-active { background: rgba(255,255,255,.06); }
+.geo__item i { width: 10px; height: 10px; border-radius: 50%; background: var(--blue-light); }
+.geo__item.is-building i { background: var(--gold-light); }
+.geo__item.is-approx i { background: transparent; border: 1.5px dashed var(--blue-light); }
+.geo__item b { display: block; font-weight: 700; font-size: 15px; }
+.geo__item small { color: var(--muted-light); font-size: 13px; }
+.geo__item span:last-child { font-size: 12px; color: var(--muted-light); }
+.pin { width: 14px; height: 14px; border-radius: 50%; background: var(--blue-light); box-shadow: 0 0 0 4px rgba(107,124,255,.25), 0 0 18px rgba(107,124,255,.6); border: 2px solid #fff; transition: transform .3s var(--ease); }
+.pin--building { background: var(--gold-light); box-shadow: 0 0 0 4px rgba(255,232,152,.25), 0 0 18px rgba(255,232,152,.6); animation: pinPulse 2.4s ease-out infinite; animation-play-state: paused; }
+.is-inview .pin--building { animation-play-state: running; }
+.pin--approx { background: rgba(107,124,255,.35); border: 1.5px dashed #fff; box-shadow: none; animation: none; }
+.pin.is-active { transform: scale(1.5); }
+@keyframes pinPulse { 0% { box-shadow: 0 0 0 0 rgba(255,232,152,.5), 0 0 18px rgba(255,232,152,.6); } 100% { box-shadow: 0 0 0 18px rgba(255,232,152,0), 0 0 18px rgba(255,232,152,.6); } }
+.leaflet-tooltip.pin-tip { background: var(--black); color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; font: 600 13px var(--font); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.leaflet-tooltip.pin-tip::before { border-top-color: var(--black); }
+.geo__note { font-size: 13px; color: var(--muted-light); padding: 14px 0 18px; }
+
+@media (max-width: 900px) {
+  .geo__wrap { grid-template-columns: 1fr; }
+  .geo__map { height: 60vh; }
+  .geo__list { max-height: 320px; border-left: 0; border-top: 1px solid var(--line-light); }
+  .hero__weather { display: none; }
+  .hero { position: relative; }   /* занавес только на десктопе — на телефоне sticky + 100svh конфликтует с адресной строкой */
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora, .aurora--css, .pattern, .progress { display: none; }
+  .wr > * { transform: none; }
+  .tilt, .scard { transform: none !important; }
+  .scard__num, .road__line::after { animation: none; }
+  .hero { position: relative; }
+}
+
+/* ============================================================
+   Эффекты по итогам дизайн-панели
+   ============================================================ */
+
+/* ---------- Стек сцен ---------- */
+.scene { transform-origin: 50% 100%; }
+.scene.is-sinking { will-change: transform; }
+.scene::after { content: ''; position: absolute; inset: 0; background: var(--black); opacity: var(--dim, 0); pointer-events: none; z-index: 5; }
+.seam-line { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--grad-gold); z-index: 6; pointer-events: none; }
+
+/* ---------- Одометр ---------- */
+.odm { display: inline-flex; white-space: nowrap; }
+.od { display: inline-block; overflow: hidden; height: 1em; vertical-align: top; }
+.od__col { display: block; transition: transform 1.8s cubic-bezier(.16, 1, .3, 1); }
+.od__col i { display: block; height: 1em; line-height: 1; font-style: normal; }
+.od-sep { display: inline-block; height: 1em; line-height: 1; }
+.road__total b .od__col i, .road__total b .od-sep { background: var(--grad-gold); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------- Долли ---------- */
+
+
+/* ---------- Дорога ---------- */
+.road__svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.road__asphalt { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 22; stroke-linecap: round; }
+.road__fillpath { fill: none; stroke: url(#roadGrad); stroke-width: 22; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.road__axis { fill: none; stroke: rgba(255,255,255,.5); stroke-width: 2; stroke-dasharray: 18 16; animation: dash2 1.4s linear infinite; animation-play-state: paused; }
+.is-inview .road__axis { animation-play-state: running; }
+@keyframes dash2 { to { stroke-dashoffset: -34; } }
+.road__light { transition: transform .15s linear; }
+.road__car { fill: var(--black); stroke: rgba(255,255,255,.75); stroke-width: 1.5; }
+.road__glass { fill: rgba(255,255,255,.25); }
+@media (max-width: 900px) { .road__asphalt, .road__fillpath { stroke-width: 14; } }
+
+/* ---------- Силуэт построенного ---------- */
+.skyline { position: relative; z-index: 1; margin: -24px 0 8px; overflow: hidden; }
+.skyline__label { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted-light); text-align: center; }
+.skyline svg { display: block; width: min(100%, 720px); height: auto; margin: 0 auto; overflow: visible; }
+.bld { transform: translateY(100%); transition: transform 1.2s var(--ease) calc(var(--i) * 70ms); cursor: pointer; }
+.is-dusk .bld { transform: none; }
+.bld__body { fill: var(--deep-dark); }
+.bld--building .bld__body { fill: none; stroke: var(--gold); stroke-width: 1; stroke-dasharray: 3 3; }
+.win { fill: var(--gold-light); opacity: 0; }
+.is-dusk .bld:not(.bld--building) .win { animation: win .9s steps(3) forwards; animation-delay: calc(1.2s + var(--d)); }
+.is-dusk.is-lit .bld:not(.bld--building) .win { animation: none; opacity: 1; }
+.bld--building .win--dark { fill: rgba(255,255,255,.12); opacity: 1; animation: none; }
+.is-dusk .bld--building .win:not(.win--dark) { animation: win .9s steps(3) forwards; animation-delay: calc(1.2s + var(--d)); }
+.is-dusk.is-lit .bld--building .win:not(.win--dark) { animation: none; opacity: 1; }
+.bld__pct { font: 700 9px var(--font); fill: var(--gold-light); letter-spacing: .04em; }
+.readiness { margin: 0 0 22px; }
+.readiness__head { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted-light); margin-bottom: 8px; }
+.readiness__head b { color: #fff; }
+.readiness__bar { height: 4px; background: rgba(255,255,255,.14); border-radius: 4px; overflow: hidden; }
+.readiness__bar i { display: block; height: 100%; width: var(--w, 0%); background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: inherit; transition: width 1.6s var(--ease) .3s; }
+.m-body .readiness__head { color: var(--muted); } .m-body .readiness__head b { color: var(--black); } .m-body .readiness__bar { background: var(--line-dark); }
+@keyframes win { 0% { opacity: 0; } 40% { opacity: 1; } 60% { opacity: .15; } 100% { opacity: 1; } }
+.bld:hover .bld__body { fill: var(--deep); }
+.bld--building:hover .bld__body { fill: rgba(184,148,62,.15); }
+
+/* ---------- Кинолента превью ---------- */
+.works__preview img[hidden] { display: none; }
+.reel { position: absolute; inset: 0; display: grid; grid-auto-rows: 100%; gap: 4px; background: var(--deep); transition: transform .8s var(--ease); will-change: transform; }
+.reel img { width: 100%; height: 100%; object-fit: cover; }
+.works__preview.is-switching { animation: reelPop .35s var(--ease); }
+@keyframes reelPop { from { scale: .96; } }
+
+/* ---------- Тёплый свет на дороге и в подвале ---------- */
+.footer:has(.footer__brand:hover)::before { opacity: 0; }
+.roads.spot::before, .footer.spot::before { background: radial-gradient(700px circle at var(--mx, 50%) var(--my, 50%), rgba(255,232,152,.11), rgba(184,148,62,.04) 40%, transparent 65%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene::after, .seam-line { display: none; }
+  .bld { transform: none; }
+  .win { opacity: 1; animation: none; }
+  .road__axis { animation: none; }
+}
+/* точки лет — по центру SVG-дороги */
+.step::before { left: -59px; }
+@media (max-width: 900px) { .step::before { left: -47px; } }
+
+/* ---------- Ход строительства ---------- */
+.build { background: var(--black); color: #fff; padding: clamp(90px, 12vw, 160px) 0; }
+.tabs--dark .tab { border-color: var(--line-light); color: var(--muted-light); }
+.tabs--dark .tab:hover { border-color: #fff; color: #fff; }
+.tabs--dark .tab.is-active { background: #fff; color: var(--black); border-color: #fff; }
+.build__grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: start; }
+.build__stage { margin: 0; position: relative; }
+.build__frame { position: relative; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; background: var(--deep-dark); }
+.build__frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .5s; }
+.build__frame img.is-fading { opacity: 0; }
+.build__cap { display: flex; justify-content: space-between; gap: 16px; padding: 14px 2px 0; font-size: 14px; color: var(--muted-light); }
+.build__cap b { color: #fff; font: 500 20px/1.2 var(--display); letter-spacing: -.02em; text-transform: capitalize; }
+.build__nav { position: absolute; right: 14px; top: 14px; display: flex; gap: 6px; }
+.build__btn { padding: 10px 14px; border-radius: 999px; background: rgba(21,21,21,.6); backdrop-filter: blur(10px); color: #fff; font-weight: 700; font-size: 14px; border: 1px solid rgba(255,255,255,.2); transition: background .3s; }
+.build__btn:hover { background: rgba(27,54,255,.85); }
+.build__btn--play.is-on { background: var(--gold); color: var(--black); border-color: var(--gold); }
+.build__facts { display: grid; gap: 0; border-top: 1px solid var(--line-light); }
+.build__facts div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line-light); font-size: 15px; }
+.build__facts dt { color: var(--muted-light); }
+.build__facts dd { margin: 0; font-weight: 700; text-align: right; }
+.build__facts dd small { display: block; font-weight: 400; color: var(--muted-light); font-size: 12px; }
+.build__facts a { color: var(--gold-light); text-decoration: underline; }
+.build__facts .readiness { margin: 18px 0 8px; }
+.build__timeline { position: relative; display: flex; align-items: flex-end; gap: 0; margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--line-light); overflow-x: auto; scrollbar-width: none; }
+.build__timeline::-webkit-scrollbar { display: none; }
+.build__tick { flex: 1 0 44px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; background: none; border: 0; color: var(--muted-light); font-size: 11px; letter-spacing: .04em; cursor: pointer; min-width: 44px; }
+.build__tick i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.4); transition: all .3s; }
+.build__tick:hover i { border-color: #fff; }
+.build__tick.is-active i { background: var(--gold-light); border-color: var(--gold-light); box-shadow: 0 0 0 5px rgba(255,232,152,.2); }
+.build__tick.is-active { color: #fff; }
+.build__tick.is-year { color: #fff; font-weight: 700; }
+.build__tick.is-year i { border-color: #fff; }
+.build__note { margin: 18px 0 0; font-size: 13px; color: var(--muted-light); max-width: 80ch; }
+@media (max-width: 900px) {
+  .build__grid { grid-template-columns: 1fr; }
+  .build__frame { aspect-ratio: 4 / 3; }
+  .build__nav { top: auto; bottom: 12px; right: 12px; }
+  .build__tick { flex: 0 0 52px; }
+}
