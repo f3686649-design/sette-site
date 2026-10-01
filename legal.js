@@ -7,7 +7,7 @@ const LEGAL = {
   consentVersion: '0.1',        // версия текста consent.html — менять при каждой правке текста
   adsConsentVersion: '0.1',     // версия текста consent-ads.html
   cookieTextVersion: '0.1',     // версия текста cookie-баннера
-  metrikaId: '',                // номер счётчика Яндекс Метрики; пусто — счётчик не подключается
+  metrikaId: window.SETTE_CONFIG?.metrikaId || '',                // номер счётчика Яндекс Метрики; пусто — счётчик не подключается
   storageKey: 'sette_consent',
   ttlDays: 365,
 };
@@ -46,6 +46,11 @@ const LEGAL = {
       <button type="button" class="pill pill--accent" data-choice="all">Разрешить аналитику</button>
       <button type="button" class="pill pill--outline" data-choice="necessary">Только необходимые</button>
     </div>`;
+  if (!LEGAL.metrikaId) {
+    banner.querySelector('#cookieText').textContent = 'Аналитика отключена. Сайт сохраняет только выбранные вами настройки cookie в этом браузере.';
+    banner.querySelector('[data-choice="all"]').hidden = true;
+    banner.querySelector('[data-choice="necessary"]').textContent = 'Понятно';
+  }
   document.body.append(banner);
   let lastTrigger = null;
   const open = (byUser) => { banner.classList.add('is-open'); if (byUser) requestAnimationFrame(() => banner.querySelector('[data-choice]').focus()); };
@@ -61,7 +66,7 @@ const LEGAL = {
 
   const saved = read();
   if (saved) { if (saved.choice === 'all') loadAnalytics(); }
-  else setTimeout(open, 1600);   // после заставки
+  else if (LEGAL.metrikaId) setTimeout(open, 1600);   // после заставки
 
   // «Настройки cookie» в подвале — отзыв или изменение согласия
   document.addEventListener('click', (e) => {

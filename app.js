@@ -1,13 +1,16 @@
-// Куда отправлять заявки. Пока пусто — форма открывает письмо на почту отдела продаж.
-// Для работы «в один клик» указать адрес обработчика (CRM, Telegram-бот, PHP-скрипт хостинга).
-const SUBMIT_URL = '';
+// Публичный адрес обработчика задаётся в site-config.js. Вебхук CRM хранится только на сервере.
+const SUBMIT_URL = window.SETTE_CONFIG?.submitUrl || '';
 const SALES_EMAIL = 'otdelprodazh-sette@mail.ru';
 
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const fmt = (n) => Math.round(n).toLocaleString('ru-RU');
-const img = (p) => (p.startsWith('http') ? p : encodeURI(BASE + p));
+const img = (p) => {
+  const url = p.startsWith('http') ? p : BASE + p;
+  return typeof MEDIA !== 'undefined' && MEDIA[url] ? MEDIA[url] : encodeURI(url);
+};
+const thumb = (p) => img(p).replace(/\.webp$/, '-thumb.webp');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const mqDesktop = matchMedia('(min-width: 901px)');
@@ -185,14 +188,17 @@ function renderWorks(filter) {
   list.innerHTML = items.map((o, i) => `
     <li><a href="#portfolio" class="row" data-id="${o.id}" style="animation-delay:${i * 45}ms">
       <span class="row__n">${String(i + 1).padStart(2, '0')}</span>
-      <span class="row__thumb"><img src="${img(o.cover)}" alt="" loading="lazy"></span>
+      <span class="row__thumb"><img src="${thumb(o.cover)}" alt="" loading="lazy" width="400" height="300"></span>
       <span class="row__title"><span class="rw-line">${o.title.split(' ').map((w, k) => `<span class="rw" style="--k:${k}"><b>${w}</b><b aria-hidden="true">${w}</b></span>`).join(' ')}</span><small>${TYPE_LABEL[o.type]} · ${o.year}</small></span>
       <span class="row__sub">${o.subtitle}</span>
       <span class="row__year">${o.year}</span>
       <span class="row__area">${o.area ? `${o.area} м²` : o.floors ? `${o.floors} эт.` : ''}</span>
       <span class="row__arrow">→</span>
     </a></li>`).join('');
-  $$('.tab').forEach((t) => t.classList.toggle('is-active', t.dataset.filter === filter));
+  $$('#tabs .tab').forEach((t) => {
+    t.classList.toggle('is-active', t.dataset.filter === filter);
+    t.setAttribute('aria-pressed', String(t.dataset.filter === filter));
+  });
 }
 renderWorks('all');
 $('#tabs').addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) renderWorks(t.dataset.filter); });
@@ -200,6 +206,10 @@ $('#tabs').addEventListener('click', (e) => { const t = e.target.closest('.tab')
 list.addEventListener('mouseover', (e) => {
   const row = e.target.closest('.row');
   if (!row || !finePointer) return;
+  const object = OBJECTS.find((o) => o.id === row.dataset.id);
+  previewImg.src = img(object.cover);
+  previewImg.alt = object.title;
+  previewImg.hidden = false;
   preview.classList.add('is-on');
 });
 list.addEventListener('mouseleave', () => preview.classList.remove('is-on'));
@@ -227,12 +237,12 @@ function openModal(o) {
     <div class="m-gallery">
       <div class="m-gallery__main"><img id="galMain" src="${img(photos[0])}" alt="${o.title}"></div>
       ${photos.length > 1 ? `<div class="m-gallery__thumbs">${photos.map((p, i) =>
-        `<button type="button" aria-label="Фото ${i + 1} из ${photos.length}" ${i ? '' : 'aria-current="true"'} class="${i ? '' : 'is-active'}"><img src="${img(p)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
+        `<button type="button" aria-label="Фото ${i + 1} из ${photos.length}" ${i ? '' : 'aria-current="true"'} class="${i ? '' : 'is-active'}"><img src="${thumb(p)}" data-full="${img(p)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}
     </div>
     <div class="m-body">
       <div>
         <span class="m-tag">${o.status === 'building' ? 'Строится' : TYPE_LABEL[o.type]}</span>
-        <h3>${o.title}</h3>
+        <h3 id="modalTitle">${o.title}</h3>
         <p class="m-sub">${[o.subtitle, o.address].filter(Boolean).join(' · ')}</p>
         ${o.text ? `<p>${o.text}</p>` : ''}
         ${o.status === 'building' ? `<p class="m-decl">Застройщик: ${o.developer || '<span class="todo">[[ООО «СЗ «…»]]</span>'} · Проектная декларация, разрешение на строительство и документы объекта размещены в ЕИСЖС на сайте <a href="${o.eisgs || 'https://наш.дом.рф/'}" target="_blank" rel="noopener">наш.дом.рф</a>. Квартиры реализуются по ДДУ (214-ФЗ) с использованием счетов эскроу.</p>` : ''}
@@ -256,7 +266,7 @@ modalBody.addEventListener('click', (e) => {
   if (t) {
     const main = $('#galMain');
     delete main.dataset.nfd;
-    main.src = t.querySelector('img').src;
+    main.src = t.querySelector('img').dataset.full;
     $$('.m-gallery__thumbs button', modalBody).forEach((b) => { b.classList.toggle('is-active', b === t); b.toggleAttribute('aria-current', b === t); });
   }
   const cta = e.target.closest('[data-complex]');
@@ -279,35 +289,45 @@ document.addEventListener('click', (e) => {
 
 /* ================= Форма ================= */
 const form = $('#pickForm'), msg = $('#formMsg');
-let formStarted = 0;
-form.addEventListener('focusin', () => { formStarted ||= Date.now(); }, { once: true });
+let formStarted = 0, submitting = false;
+form.addEventListener('focusin', () => { formStarted ||= Date.now(); });
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (submitting) return;
   const fd = new FormData(form);
   const nameOk = (fd.get('name') || '').trim().length > 1;
-  const phoneOk = (fd.get('phone') || '').replace(/\D/g, '').length >= 10;
+  const digits = (fd.get('phone') || '').replace(/\D/g, '');
+  const phoneOk = /^(?:[78]\d{10}|\d{10})$/.test(digits);
   form.elements.name.classList.toggle('is-invalid', !nameOk);
   form.elements.phone.classList.toggle('is-invalid', !phoneOk);
   const say = (text, ok) => { msg.className = `form__msg ${ok ? 'is-ok' : 'is-err'}`; msg.textContent = text; };
-  if (!nameOk || !phoneOk) return say('Укажите имя и телефон');
+  form.elements.name.setAttribute('aria-invalid', String(!nameOk));
+  form.elements.phone.setAttribute('aria-invalid', String(!phoneOk));
+  if (!nameOk || !phoneOk) {
+    say(!nameOk ? 'Укажите имя (не менее двух букв)' : 'Укажите телефон: +7 и 10 цифр номера');
+    (!nameOk ? form.elements.name : form.elements.phone).focus();
+    return;
+  }
   if (!fd.get('consent')) return say('Нужно согласие на обработку данных');
 
   const utm = Object.fromEntries([...new URLSearchParams(location.search)].filter(([k]) => k.startsWith('utm_')));
   const data = { name: fd.get('name'), phone: fd.get('phone'), rooms: fd.getAll('rooms').join(', ') || 'не указано', complex: fd.get('complex'),
     consent: true, ads: !!fd.get('ads'), hp_field: fd.get('hp_field') || '', elapsed_ms: formStarted ? Date.now() - formStarted : 0, ...(typeof legalConsent === 'function' ? legalConsent() : {}), ...utm };
   if (SUBMIT_URL) {
-    const btn = form.querySelector('[type=submit]'); btn.disabled = true;
+    const btn = form.querySelector('[type=submit]');
+    submitting = true; btn.disabled = true; form.setAttribute('aria-busy', 'true');
+    say('Отправляем заявку…', true);
+    const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 15000);
     try {
-      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 15000);
       const r = await fetch(SUBMIT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal: ctrl.signal });
       clearTimeout(tm);
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.error || String(r.status));
       say('Спасибо! Менеджер перезвонит в ближайшее рабочее время.', true);
-      form.reset();
+      form.reset(); formStarted = 0;
     } catch (e) {
       say(e.message === 'validation' ? 'Проверьте имя и телефон' : e.message === 'rate' ? 'Слишком много попыток, попробуйте позже' : 'Не удалось отправить. Позвоните нам: +7 914 275-78-77');
-    } finally { btn.disabled = false; }
+    } finally { clearTimeout(tm); submitting = false; btn.disabled = false; form.removeAttribute('aria-busy'); }
   } else {
     const body = `Имя: ${data.name}\nТелефон: ${data.phone}\nКвартира: ${data.rooms}\nЖК: ${data.complex}\nСогласие на обработку ПД: да (версия ${data.consent_version || '—'})\nСогласие на рекламу: ${data.ads ? 'да' : 'нет'}`;
     location.href = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent('Заявка с сайта: подбор квартиры')}&body=${encodeURIComponent(body)}`;
@@ -324,10 +344,27 @@ const header = $('#header'), menu = $('#menu'), menuBtn = $('#menuBtn');
 const setMenu = (open) => {
   menu.classList.toggle('is-open', open);
   menuBtn.setAttribute('aria-expanded', open);
+  menu.inert = !open;
+  menu.setAttribute('aria-hidden', String(!open));
+  menuBtn.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
   document.body.style.overflow = open ? 'hidden' : '';
   open ? lenis?.stop() : lenis?.start();
 };
 menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
+setMenu(false);
+document.addEventListener('keydown', (e) => {
+  if (!menu.classList.contains('is-open')) return;
+  if (e.key === 'Escape') { setMenu(false); menuBtn.focus(); }
+  if (e.key === 'Tab') {
+    const links = [...menu.querySelectorAll('a[href]')];
+    const first = links[0], last = links.at(-1);
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); menuBtn.focus(); }
+    else if (e.shiftKey && document.activeElement === menuBtn) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); menuBtn.focus(); }
+    else if (!e.shiftKey && document.activeElement === menuBtn) { e.preventDefault(); first.focus(); }
+  }
+});
+mqDesktop.addEventListener('change', () => { if (isDesktop()) setMenu(false); });
 
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
