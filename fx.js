@@ -158,20 +158,6 @@ gl_FragColor=vec4(col*k,1.0);}`;
     $$('.label').forEach((l) => io.observe(l));
   }
 
-  /* ---------- Погода в Якутске (open-meteo, без ключа) ---------- */
-  (async () => {
-    try {
-      if (!isDesktop()) return;   // на телефоне строка скрыта — запрос не нужен
-      const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=62.03&longitude=129.73&current=temperature_2m,weather_code&timezone=Asia%2FYakutsk');
-      const j = await r.json(); const t = Math.round(j.current.temperature_2m), code = j.current.weather_code;
-      const word = code <= 1 ? 'ясно' : code === 2 ? 'малооблачно' : code === 3 ? 'пасмурно' : code <= 48 ? 'туман' : code <= 57 ? 'морось' : code <= 67 ? 'дождь' : code <= 77 ? 'снег' : code <= 82 ? 'ливень' : code <= 86 ? 'снегопад' : 'гроза';
-      const el = document.createElement('span'); el.className = 'hero__weather'; el.title = 'Погода в Якутске сейчас · данные Open-Meteo.com'; el.setAttribute('aria-label', `Погода в Якутске сейчас: ${t}°, ${word}`);
-      el.innerHTML = `сейчас <b>${t > 0 ? '+' : t < 0 ? '−' : ''}${Math.abs(t)}°</b> ${word}`;
-      $('.hero__top > span:first-child').append(el);
-      requestAnimationFrame(() => el.classList.add('is-on'));
-    } catch (e) { /* без интернета — просто нет строки погоды */ }
-  })();
-
   /* ---------- Карта объектов (Leaflet + OSM) ---------- */
   const geo = $('#geo');
   if (geo && typeof OBJECTS !== 'undefined') {
@@ -179,12 +165,18 @@ gl_FragColor=vec4(col*k,1.0);}`;
     const list = $('#geoList');
     const coarse = matchMedia('(pointer: coarse)').matches;
     if (!items.length) geo.hidden = true;   // координаты ещё не заполнены — раздел скрыт
-    else if (!window.L) geo.classList.add('geo--nomap');   // библиотека карты не загрузилась — остаётся список
     else {
     list.innerHTML = items.map((o) => `
       <button class="geo__item ${o.status === 'building' ? 'is-building' : ''} ${o.geo.approx ? 'is-approx' : ''}" data-id="${o.id}">
         <i></i><span><b>${o.title}</b><small>${o.subtitle}${o.geo.approx ? ' · примерно' : ''}</small></span><span>${o.deadline ? 'сдача ' + o.deadline : o.year}</span>
       </button>`).join('');
+    if (!window.L) {
+      geo.classList.add('geo--nomap');
+      list.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-id]');
+        if (button) openModal(items.find((o) => o.id === button.dataset.id));
+      });
+    }
     let map, markers = {};
     const init = () => {
       map = L.map($('#geoMap'), { scrollWheelZoom: false, zoomControl: false, attributionControl: true, dragging: !coarse, touchZoom: coarse ? 'center' : true });
@@ -219,10 +211,10 @@ gl_FragColor=vec4(col*k,1.0);}`;
       const o = items.find((x) => x.id === b.dataset.id);
       map.flyTo([o.geo.lat, o.geo.lon], Math.max(map.getZoom(), 15), { duration: 1.2 });
       setActive(o.id);
-      if (coarse && typeof openModal === 'function') openModal(o);
+      if (typeof openModal === 'function') openModal(o);
       else if (!isDesktop()) $('#geoMap').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
     });
-    new IntersectionObserver((en, obs) => { if (en[0].isIntersecting) { init(); obs.disconnect(); } }, { rootMargin: '300px' }).observe(geo);
+    if (window.L) new IntersectionObserver((en, obs) => { if (en[0].isIntersecting) { init(); obs.disconnect(); } }, { rootMargin: '300px' }).observe(geo);
     }
   }
 
@@ -458,27 +450,29 @@ gl_FragColor=vec4(col*k,1.0);}`;
 
   const tabs = $('#buildTabs'), img = $('#buildImg'), imgNext = $('#buildImgNext'), month = $('#buildMonth'), placed = $('#buildPlaced');
   const facts = $('#buildFacts'), timeline = $('#buildTimeline'), play = $('#buildPlay');
-  let cur = null, idx = 0, timer = null;
+  let cur = null, idx = 0, timer = null, swapTimer = null;
 
   tabs.innerHTML = items.map((o, k) => `<button class="tab ${k ? '' : 'is-active'}" role="tab" aria-selected="${k ? 'false' : 'true'}" data-id="${o.id}">${o.title} <sup>${o.progress.length}</sup></button>`).join('');
 
-  const preload = (i) => { const p = cur.progress[i]; if (p) { imgNext.src = p.url; } };
+  const preload = (i) => { const p = cur.progress[i]; if (p) { imgNext.src = MEDIA[p.url] || p.url; } };
 
   const show = (i, instant) => {
+    if (!cur) return;
+    clearTimeout(swapTimer);
     idx = (i + cur.progress.length) % cur.progress.length;
     const p = cur.progress[idx];
-    if (instant || reduceMotion) { img.src = p.url; }
+    if (instant || reduceMotion) { img.classList.remove('is-fading'); img.src = MEDIA[p.url] || p.url; }
     else {
       img.classList.add('is-fading');
-      const swap = () => { img.src = p.url; img.onload = () => img.classList.remove('is-fading'); };
-      setTimeout(swap, 180);
+      const swap = () => { img.onload = img.onerror = () => img.classList.remove('is-fading'); img.src = MEDIA[p.url] || p.url; };
+      swapTimer = setTimeout(swap, 180);
     }
     img.alt = `${cur.title}: фотоотчёт, ${p.label}`;
     month.textContent = p.label;
     placed.textContent = `размещён ${p.placed} · ${p.n} фото в месяце`;
     $$('.build__tick', timeline).forEach((t, k) => { t.classList.toggle('is-active', k === idx); t.setAttribute('aria-pressed', k === idx); });
     const tick = $$('.build__tick', timeline)[idx];
-    if (tick) tick.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    if (tick) timeline.scrollTo({ left: tick.offsetLeft - timeline.offsetLeft - timeline.clientWidth / 2 + tick.clientWidth / 2, behavior: reduceMotion ? 'auto' : 'smooth' });
     preload(idx + 1);
   };
 
@@ -508,7 +502,7 @@ gl_FragColor=vec4(col*k,1.0);}`;
 
   const stop = () => { clearInterval(timer); timer = null; play.classList.remove('is-on'); play.textContent = '▶ Таймлапс'; play.setAttribute('aria-label', 'Запустить таймлапс'); };
   const start = () => {
-    if (cur.progress.length < 2) return;
+    if (!cur || cur.progress.length < 2) return;
     show(0, true); play.classList.add('is-on'); play.textContent = '■ Стоп'; play.setAttribute('aria-label', 'Остановить таймлапс');
     timer = setInterval(() => { if (idx >= cur.progress.length - 1) { stop(); return; } show(idx + 1); }, reduceMotion ? 1500 : 900);
   };

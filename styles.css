@@ -471,3 +471,20 @@ body:not(.is-loading) .hero__title .line > span { transform: none; }
   .manifest__text .w { opacity: 1; }
   .cursor { display: none; }
 }
+
+/* Launch usability */
+.skip-link { position:fixed; top:12px; left:16px; z-index:1000; padding:12px 18px; background:#fff; color:#132e5b; transform:translateY(-180%); }
+.skip-link:focus { transform:none; }
+.noscript-note { position:relative; z-index:1001; background:#fff; padding:20px; }
+.office-map { min-height:360px; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; gap:24px; padding:clamp(24px,4vw,64px); background:var(--deep); color:#fff; }
+.office-map h3 { margin:0; font:500 clamp(28px,3vw,46px)/1.15 var(--display); }
+.office-map p { margin:0; }
+.office-map .label { color:var(--gold-light); }
+[hidden] { display:none !important; }
+@media(max-width:560px) { .cookie { max-height:70svh; overflow:auto; } .menu__nav { gap:10px; } .menu { overflow-y:auto; } }
+@media (max-width:900px) {
+  .row__title .rw { display:inline; height:auto; overflow:visible; }
+  .row__title .rw b { display:inline; transform:none; }
+  .row__title .rw b + b { display:none; }
+}
+.contacts__map { filter:none; }

@@ -218,7 +218,7 @@ main > section:not(.hero), .marquee { position: relative; z-index: 2; }
 .build__btn:hover { background: rgba(27,54,255,.85); }
 .build__btn--play.is-on { background: var(--gold); color: var(--black); border-color: var(--gold); }
 .build__facts { display: grid; gap: 0; border-top: 1px solid var(--line-light); }
-.build__facts div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line-light); font-size: 15px; }
+.build__facts dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line-light); font-size: 15px; }
 .build__facts dt { color: var(--muted-light); }
 .build__facts dd { margin: 0; font-weight: 700; text-align: right; }
 .build__facts dd small { display: block; font-weight: 400; color: var(--muted-light); font-size: 12px; }
@@ -237,6 +237,7 @@ main > section:not(.hero), .marquee { position: relative; z-index: 2; }
 @media (max-width: 900px) {
   .build__grid { grid-template-columns: 1fr; }
   .build__frame { aspect-ratio: 4 / 3; }
-  .build__nav { top: auto; bottom: 12px; right: 12px; }
+  .build__nav { position: static; margin-top: 14px; justify-content: flex-end; }
+  .build__cap { flex-direction: column; gap: 6px; }
   .build__tick { flex: 0 0 52px; }
 }

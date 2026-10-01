@@ -1,0 +1,5 @@
+artifacts/
+release/
+private/
+node_modules/
+*.log
